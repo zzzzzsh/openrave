@@ -45,6 +45,7 @@
 #include <boost/python.hpp>
 #include <boost/python/exception_translator.hpp>
 #include <boost/python/docstring_options.hpp>
+#include <boost/python/numpy.hpp>
 #include <pyconfig.h>
 #include <numpy/arrayobject.h>
 
@@ -87,7 +88,7 @@ class PyConfigurationSpecification;
 class PyIkParameterization;
 class PyXMLReadable;
 class PyCameraIntrinsics;
-    
+
 typedef boost::shared_ptr<PyInterfaceBase> PyInterfaceBasePtr;
 typedef boost::shared_ptr<PyInterfaceBase const> PyInterfaceBaseConstPtr;
 typedef boost::shared_ptr<PyKinBody> PyKinBodyPtr;
@@ -127,7 +128,7 @@ typedef boost::shared_ptr<PyConfigurationSpecification const> PyConfigurationSpe
 typedef boost::shared_ptr<PyIkParameterization> PyIkParameterizationPtr;
 typedef boost::shared_ptr<PyXMLReadable> PyXMLReadablePtr;
 typedef boost::shared_ptr<PyCameraIntrinsics> PyCameraIntrinsicsPtr;
-    
+
 inline uint64_t GetMicroTime()
 {
 #ifdef _WIN32
@@ -292,57 +293,63 @@ inline RaveTransformMatrix<T> ExtractTransformMatrixType(const object& o)
 inline object toPyArrayRotation(const TransformMatrix& t)
 {
     npy_intp dims[] = {3,3};
-    PyObject *pyvalues = PyArray_SimpleNew(2,dims, sizeof(dReal)==8 ? PyArray_DOUBLE : PyArray_FLOAT);
-    dReal* pdata = (dReal*)PyArray_DATA(pyvalues);
+    PyObject *pyvalues = PyArray_SimpleNew(2,dims, sizeof(dReal)==8 ? NPY_DOUBLE : NPY_FLOAT);
+    dReal* pdata = (dReal*)PyArray_DATA((PyArrayObject *)pyvalues);
     pdata[0] = t.m[0]; pdata[1] = t.m[1]; pdata[2] = t.m[2];
     pdata[3] = t.m[4]; pdata[4] = t.m[5]; pdata[5] = t.m[6];
     pdata[6] = t.m[8]; pdata[7] = t.m[9]; pdata[8] = t.m[10];
-    return static_cast<numeric::array>(handle<>(pyvalues));
+    auto pyvalues_handle = boost::python::handle<>(pyvalues);
+    auto pyvalues_object = boost::python::object(pyvalues_handle);
+    return boost::python::numpy::array(pyvalues_object);
 }
 
 inline object toPyArray3(const std::vector<RaveVector<float> >& v)
 {
     npy_intp dims[] = { npy_intp(v.size()), npy_intp(3) };
-    PyObject *pyvalues = PyArray_SimpleNew(2,dims, PyArray_FLOAT);
+    PyObject *pyvalues = PyArray_SimpleNew(2,dims, NPY_FLOAT);
     if( v.size() > 0 ) {
-        float* pf = (float*)PyArray_DATA(pyvalues);
+        float* pf = (float*)PyArray_DATA((PyArrayObject*)pyvalues);
         FOREACHC(it,v) {
             *pf++ = it->x;
             *pf++ = it->y;
             *pf++ = it->z;
         }
     }
-    return static_cast<numeric::array>(handle<>(pyvalues));
+    auto pyvalues_handle = boost::python::handle<>(pyvalues);
+    auto pyvalues_object = boost::python::object(pyvalues_handle);
+    return boost::python::numpy::array(pyvalues_object);
 }
 
 inline object toPyArray3(const std::vector<RaveVector<double> >& v)
 {
     npy_intp dims[] = { npy_intp(v.size()), npy_intp(3) };
-    PyObject *pyvalues = PyArray_SimpleNew(2,dims, PyArray_DOUBLE);
+    PyObject *pyvalues = PyArray_SimpleNew(2,dims, NPY_DOUBLE);
     if( v.size() > 0 ) {
-        double* pf = (double*)PyArray_DATA(pyvalues);
+        double* pf = (double*)PyArray_DATA((PyArrayObject*)pyvalues);
         FOREACHC(it,v) {
             *pf++ = it->x;
             *pf++ = it->y;
             *pf++ = it->z;
         }
     }
-    return static_cast<numeric::array>(handle<>(pyvalues));
+    auto pyvalues_handle = boost::python::handle<>(pyvalues);
+    auto pyvalues_object = boost::python::object(pyvalues_handle);
+    return boost::python::numpy::array(pyvalues_object);
 }
 
 inline object toPyVector2(Vector v)
 {
-    return numeric::array(boost::python::make_tuple(v.x,v.y));
+    return boost::python::numpy::array(boost::python::make_tuple(v.x,v.y));
 }
 
 inline object toPyVector3(Vector v)
 {
-    return numeric::array(boost::python::make_tuple(v.x,v.y,v.z));
+    return boost::python::numpy::array(boost::python::make_tuple(v.x,v.y,v.z));
 }
 
 inline object toPyVector4(Vector v)
 {
-    return numeric::array(boost::python::make_tuple(v.x,v.y,v.z,v.w));
+    return boost::python::numpy::array(boost::python::make_tuple(v.x,v.y,v.z,v.w));
 }
 
 /// \brief converts dictionary of keyvalue pairs
@@ -696,7 +703,7 @@ const ConfigurationSpecification& GetConfigurationSpecification(PyConfigurationS
 
 PyCameraIntrinsicsPtr toPyCameraIntrinsics(const geometry::RaveCameraIntrinsics<float>&);
 PyCameraIntrinsicsPtr toPyCameraIntrinsics(const geometry::RaveCameraIntrinsics<double>&);
-    
+
 PyInterfaceBasePtr RaveCreateInterface(PyEnvironmentBasePtr pyenv, InterfaceType type, const std::string& name);
 void init_openravepy_global();
 void InitPlanningUtils();

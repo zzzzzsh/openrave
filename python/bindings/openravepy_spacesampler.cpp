@@ -137,26 +137,28 @@ public:
 protected:
     object _ReturnSamples2D(const std::vector<dReal>&samples)
     {
+        auto type = numpy::dtype::get_builtin<double>();
         if( samples.size() == 0 ) {
-            return static_cast<numeric::array>(numeric::array(boost::python::list()).astype("f8"));
+            return numpy::array(boost::python::list()).astype(type);
         }
         int dim = _pspacesampler->GetNumberOfValues();
         npy_intp dims[] = { npy_intp(samples.size()/dim), npy_intp(dim) };
-        PyObject *pyvalues = PyArray_SimpleNew(2,dims, sizeof(dReal)==8 ? PyArray_DOUBLE : PyArray_FLOAT);
-        memcpy(PyArray_DATA(pyvalues),&samples.at(0),samples.size()*sizeof(samples[0]));
-        return static_cast<numeric::array>(handle<>(pyvalues));
+        PyObject *pyvalues = PyArray_SimpleNew(2,dims, sizeof(dReal)==8 ? NPY_DOUBLE : NPY_FLOAT);
+        memcpy(PyArray_DATA((PyArrayObject*)pyvalues),&samples.at(0),samples.size()*sizeof(samples[0]));
+        return numpy::array(object(handle<>(pyvalues)));
     }
 
     object _ReturnSamples2D(const std::vector<uint32_t>&samples)
     {
+        auto type = numpy::dtype::get_builtin<uint32_t>();
         if( samples.size() == 0 ) {
-            return static_cast<numeric::array>(numeric::array(boost::python::list()).astype("u4"));
+            return numpy::array(boost::python::list()).astype(type);
         }
         int dim = _pspacesampler->GetNumberOfValues();
         npy_intp dims[] = { npy_intp(samples.size()/dim), npy_intp(dim) };
-        PyObject *pyvalues = PyArray_SimpleNew(2,dims, PyArray_UINT32);
-        memcpy(PyArray_DATA(pyvalues),&samples.at(0),samples.size()*sizeof(samples[0]));
-        return static_cast<numeric::array>(handle<>(pyvalues));
+        PyObject *pyvalues = PyArray_SimpleNew(2,dims, NPY_UINT32);
+        memcpy(PyArray_DATA((PyArrayObject*)pyvalues),&samples.at(0),samples.size()*sizeof(samples[0]));
+        return numpy::array(object(handle<>(pyvalues)));
     }
 };
 

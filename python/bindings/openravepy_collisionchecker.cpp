@@ -503,10 +503,11 @@ public:
 
     object CheckCollisionRays(object rays, PyKinBodyPtr pbody,bool bFrontFacingOnly=false)
     {
+        auto type = numpy::dtype::get_builtin<int>();
         object shape = rays.attr("shape");
         int num = extract<int>(shape[0]);
         if( num == 0 ) {
-            return boost::python::make_tuple(numeric::array(boost::python::list()).astype("i4"),numeric::array(boost::python::list()));
+            return boost::python::make_tuple(numpy::array(boost::python::list()).astype(type),numpy::array(boost::python::list()));
         }
         if( extract<int>(shape[1]) != 6 ) {
             throw openrave_exception(_("rays object needs to be a Nx6 vector\n"));
@@ -516,10 +517,10 @@ public:
 
         RAY r;
         npy_intp dims[] = { num,6};
-        PyObject *pypos = PyArray_SimpleNew(2,dims, sizeof(dReal)==8 ? PyArray_DOUBLE : PyArray_FLOAT);
-        dReal* ppos = (dReal*)PyArray_DATA(pypos);
-        PyObject* pycollision = PyArray_SimpleNew(1,&dims[0], PyArray_BOOL);
-        bool* pcollision = (bool*)PyArray_DATA(pycollision);
+        PyObject *pypos = PyArray_SimpleNew(2,dims, sizeof(dReal)==8 ? NPY_DOUBLE : NPY_FLOAT);
+        dReal* ppos = (dReal*)PyArray_DATA((PyArrayObject*)pypos);
+        PyObject* pycollision = PyArray_SimpleNew(1,&dims[0], NPY_BOOL);
+        bool* pcollision = (bool*)PyArray_DATA((PyArrayObject*)pycollision);
         for(int i = 0; i < num; ++i, ppos += 6) {
             vector<dReal> ray = ExtractArray<dReal>(rays[i]);
             r.pos.x = ray[0];
@@ -550,7 +551,7 @@ public:
             }
         }
 
-        return boost::python::make_tuple(static_cast<numeric::array>(handle<>(pycollision)),static_cast<numeric::array>(handle<>(pypos)));
+        return boost::python::make_tuple(numpy::array(object(handle<>(pycollision))),numpy::array(object(handle<>(pypos))));
     }
 
     bool CheckCollision(boost::shared_ptr<PyRay> pyray)

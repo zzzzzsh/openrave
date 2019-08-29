@@ -87,15 +87,15 @@ public:
         CHECK_POINTER(pykinbody);
         KinBodyPtr pbody = openravepy::GetKinBody(pykinbody);
         if( pbody->GetLinks().size() == 0 ) {
-            return numeric::array(boost::python::list());
+            return numpy::array(boost::python::list());
         }
         std::vector<std::pair<Vector,Vector> > velocities;
         if( !_pPhysicsEngine->GetLinkVelocities(pbody,velocities) ) {
             return object();
         }
         npy_intp dims[] = { npy_intp(velocities.size()), 6};
-        PyObject *pyvel = PyArray_SimpleNew(2,dims, sizeof(dReal)==8 ? PyArray_DOUBLE : PyArray_FLOAT);
-        dReal* pfvel = (dReal*)PyArray_DATA(pyvel);
+        PyObject *pyvel = PyArray_SimpleNew(2,dims, sizeof(dReal)==8 ? NPY_DOUBLE : NPY_FLOAT);
+        dReal* pfvel = (dReal*)PyArray_DATA((PyArrayObject*)pyvel);
         for(size_t i = 0; i < velocities.size(); ++i) {
             pfvel[6*i+0] = velocities[i].first.x;
             pfvel[6*i+1] = velocities[i].first.y;
@@ -104,7 +104,7 @@ public:
             pfvel[6*i+4] = velocities[i].second.y;
             pfvel[6*i+5] = velocities[i].second.z;
         }
-        return static_cast<numeric::array>(handle<>(pyvel));
+        return numpy::array(object(handle<>(pyvel)));
     }
 
     bool SetBodyForce(object pylink, object force, object position, bool bAdd)

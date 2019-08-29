@@ -21,6 +21,7 @@
 #include <boost/python/stl_iterator.hpp>
 #include <pyconfig.h>
 #include <numpy/arrayobject.h>
+#include <boost/python/numpy.hpp>
 
 #include <exception>
 #include <boost/shared_ptr.hpp>
@@ -95,7 +96,7 @@ object computeConvexDecomposition(const boost::multi_array<float, 2>& vertices, 
         ic->getConvexHullResult(i,result);
 
         npy_intp dims[] = { result.mVcount,3};
-        PyObject *pyvertices = PyArray_SimpleNew(2,dims, sizeof(result.mVertices[0])==8 ? PyArray_DOUBLE : PyArray_FLOAT);
+        PyObject *pyvertices = PyArray_SimpleNew(2,dims, sizeof(result.mVertices[0])==8 ? NPY_DOUBLE : NPY_FLOAT);
         std::copy(&result.mVertices[0],&result.mVertices[3*result.mVcount],(NxF32*)PyArray_DATA(pyvertices));
 
         dims[0] = result.mTcount;
@@ -103,7 +104,11 @@ object computeConvexDecomposition(const boost::multi_array<float, 2>& vertices, 
         PyObject *pyindices = PyArray_SimpleNew(2,dims, PyArray_INT);
         std::copy(&result.mIndices[0],&result.mIndices[3*result.mTcount],(int*)PyArray_DATA(pyindices));
 
-        hulls.append(boost::python::make_tuple(static_cast<numeric::array>(handle<>(pyvertices)), static_cast<numeric::array>(handle<>(pyindices))));
+        auto pyvertices_handle = boost::python::handle<>(pyvertices);
+        auto pyindices_handle  = boost::python::handle<>(pyindices);
+        auto pyvertices_object = boost::python::object(pyvertices_handle);
+        auto pyindices_object  = boost::python::object(pyindices_handle);
+        hulls.append(boost::python::make_tuple(numpy::array(pyvertices_object), numpy::array(pyindices_object)));
     }
 
     return hulls;
@@ -114,7 +119,8 @@ BOOST_PYTHON_FUNCTION_OVERLOADS(computeConvexDecomposition_overloads, computeCon
 BOOST_PYTHON_MODULE(convexdecompositionpy)
 {
     import_array();
-    numeric::array::set_module_and_type("numpy", "ndarray");
+    //numeric::array::set_module_and_type("numpy", "ndarray");
+    numpy::initialize();
     int_from_int();
     T_from_number<float>();
     T_from_number<double>();
