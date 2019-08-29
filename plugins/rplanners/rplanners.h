@@ -20,6 +20,7 @@
 #include "openraveplugindefs.h"
 
 #include <boost/pool/pool.hpp>
+#include <type_traits>
 
 #define _(msgid) OpenRAVE::RaveGetLocalizedTextForDomain("openrave_plugins_rplanners", msgid)
 
@@ -41,14 +42,14 @@ public:
         this->_M_impl._M_start = this->_M_impl._M_finish = this->_M_impl._M_end_of_storage = NULL;
     }
 
-    VectorWrapper(T* sourceArray, T* sourceArrayEnd)
+    VectorWrapper( T* sourceArray, T* sourceArrayEnd)
     {
         this->_M_impl._M_start = sourceArray;
         this->_M_impl._M_finish = this->_M_impl._M_end_of_storage = sourceArrayEnd;
     }
 
     // dangerous! user has to make sure not to modify anything...
-    VectorWrapper(const T* sourceArray, const T* sourceArrayEnd)
+    VectorWrapper(typename std::remove_cv<T>::type const* sourceArray, typename std::remove_cv<T>::type const* sourceArrayEnd)
     {
         this->_M_impl._M_start = const_cast<T*>(sourceArray);
         this->_M_impl._M_finish = this->_M_impl._M_end_of_storage = const_cast<T*>(sourceArrayEnd);
@@ -214,7 +215,7 @@ public:
 
     inline dReal _ComputeDistance(const dReal* config0, const dReal* config1) const
     {
-        return _distmetricfn(VectorWrapper<const dReal>(config0, config0+_dof), VectorWrapper<dReal>(config1, config1+_dof));
+        return _distmetricfn(VectorWrapper<dReal>(config0, config0+_dof), VectorWrapper<dReal>(config1, config1+_dof));
     }
 
     inline dReal _ComputeDistance(const dReal* config0, const std::vector<dReal>& config1) const
